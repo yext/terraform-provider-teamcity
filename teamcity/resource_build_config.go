@@ -826,17 +826,17 @@ func expandBuildFeature(raw interface{}) (api.BuildFeature, error) {
 func expandBuildSteps(list interface{}) ([]api.Step, error) {
 	out := make([]api.Step, 0)
 	in := list.([]interface{})
-	names := make(map[string]bool)
+	names := make(map[string]struct{})
 	for _, i := range in {
 		s, err := expandBuildStep(i)
 		if err != nil {
 			return nil, err
 		}
-		_, exist := names[s.GetName()]
-		if exist {
-			return nil, fmt.Errorf("Duplicate step name '%s'", s.GetName())
+
+		if _, exist := names[s.GetName()]; exist {
+			return nil, fmt.Errorf("Duplicate build step names '%s'", s.GetName())
 		} else {
-			names[s.GetName()] = true
+			names[s.GetName()] = struct{}{}
 		}
 
 		out = append(out, s)
