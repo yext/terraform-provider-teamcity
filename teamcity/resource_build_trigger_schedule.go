@@ -70,36 +70,36 @@ func resourceBuildTriggerSchedule() *schema.Resource {
 				Type:     schema.TypeList,
 				Optional: true,
 				MaxItems: 1,
-				Computed: true,
+				ForceNew: true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"seconds": {
 							Type:     schema.TypeString,
-							Optional: true,
+							Required: true,
 						},
 						"minutes": {
 							Type:     schema.TypeString,
-							Optional: true,
+							Required: true,
 						},
 						"hours": {
 							Type:     schema.TypeString,
-							Optional: true,
+							Required: true,
 						},
 						"day_of_month": {
 							Type:     schema.TypeString,
-							Optional: true,
+							Required: true,
 						},
 						"month": {
 							Type:     schema.TypeString,
-							Optional: true,
+							Required: true,
 						},
 						"day_of_week": {
 							Type:     schema.TypeString,
-							Optional: true,
+							Required: true,
 						},
 						"year": {
 							Type:     schema.TypeString,
-							Optional: true,
+							Required: true,
 						},
 					},
 				},
@@ -238,6 +238,9 @@ func resourceBuildTriggerScheduleRead(d *schema.ResourceData, meta interface{}) 
 		return err
 	}
 	if dt.SchedulingPolicy == api.TriggerSchedulingCron {
+		if dt.CronExpression == nil {
+			return fmt.Errorf("cron expression was not specified")
+		}
 		err := d.Set("cron_schedule", []map[string]interface{}{flattenCronSchedule(dt.CronExpression)})
 		if err != nil {
 			return err
