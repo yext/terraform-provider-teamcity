@@ -195,7 +195,10 @@ func resourceBuildTriggerScheduleCreate(d *schema.ResourceData, meta interface{}
 	timezone := d.Get("timezone").(string)
 	rules := expandStringSlice(d.Get("rules").([]interface{}))
 	schedule := d.Get("schedule").(string)
-	weekday, _ := parseWeekday(d.Get("weekday").(string))
+	weekday, err := parseWeekday(d.Get("weekday").(string))
+	if err != nil {
+		return err
+	}
 
 	opt, err := expandTriggerScheduleOptions(d)
 	if err != nil {
