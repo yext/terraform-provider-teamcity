@@ -2,6 +2,7 @@ package teamcity
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
@@ -207,6 +208,13 @@ func resourceBuildTriggerScheduleCreate(d *schema.ResourceData, meta interface{}
 		cronSchedule, err = expandCronSchedule(v.([]interface{}))
 		if err != nil {
 			return err
+		}
+	}
+
+	if strings.EqualFold(schedule, "weekly") {
+		triggerWeekday, ok := d.GetOk("weekday")
+		if !ok || triggerWeekday == nil || triggerWeekday.(string) == "" {
+			return fmt.Errorf("weekday is required if a schedule of weekly is chosen")
 		}
 	}
 
