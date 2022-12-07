@@ -3,6 +3,7 @@ package teamcity
 import (
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/hashicorp/terraform/helper/schema"
 	"github.com/hashicorp/terraform/helper/validation"
@@ -195,10 +196,7 @@ func resourceBuildTriggerScheduleCreate(d *schema.ResourceData, meta interface{}
 	timezone := d.Get("timezone").(string)
 	rules := expandStringSlice(d.Get("rules").([]interface{}))
 	schedule := d.Get("schedule").(string)
-	weekday, err := parseWeekday(d.Get("weekday").(string))
-	if err != nil {
-		return err
-	}
+	weekday := time.Sunday
 
 	opt, err := expandTriggerScheduleOptions(d)
 	if err != nil {
@@ -217,6 +215,10 @@ func resourceBuildTriggerScheduleCreate(d *schema.ResourceData, meta interface{}
 	if strings.EqualFold(schedule, "weekly") {
 		if _, ok := d.GetOk("weekday"); !ok {
 			return fmt.Errorf("weekday is required if a schedule of weekly is chosen")
+		}
+		weekday, err = parseWeekday(d.Get("weekday").(string))
+		if err != nil {
+			return err
 		}
 	}
 
