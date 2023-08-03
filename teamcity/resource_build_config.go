@@ -17,7 +17,7 @@ func resourceBuildConfig() *schema.Resource {
 		Create: resourceBuildConfigCreate,
 		Read:   resourceBuildConfigRead,
 		Update: resourceBuildConfigUpdate,
-		Delete: resourceBuildConfigDelete,
+		Delete: resourceBuildConfigArchive,
 		Importer: &schema.ResourceImporter{
 			State: schema.ImportStatePassthrough,
 		},
@@ -431,9 +431,27 @@ func resourceBuildConfigUpdate(d *schema.ResourceData, meta interface{}) error {
 	return resourceBuildConfigRead(d, meta)
 }
 
-func resourceBuildConfigDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceBuildConfigArchive(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*api.Client)
-	return client.BuildTypes.Delete(d.Id())
+
+	err := client.BuildTypes.Pause(d.Id())
+	if err != nil {
+		return err
+	}
+
+	steps, err := client.BuildTypes.GetSteps(d.Id())
+	if err != nil {
+		return err
+	}
+	for _, step := range steps {
+		err = client.BuildTypes.DeleteStep(d.Id(), step.GetID())
+		if err != nil {
+			return err
+		}
+	}
+
+	name := d.Get("name")
+	return client.BuildTypes.Rename(d.Id(), fmt.Sprintf("%s (Archived)", name.(string)))
 }
 
 func resourceBuildConfigRead(d *schema.ResourceData, meta interface{}) error {
