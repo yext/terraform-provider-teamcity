@@ -2,6 +2,7 @@ package teamcity
 
 import (
 	"errors"
+	"fmt"
 	"log"
 
 	"github.com/hashicorp/terraform/helper/schema"
@@ -13,7 +14,7 @@ func resourceProject() *schema.Resource {
 		Create: resourceProjectCreate,
 		Read:   resourceProjectRead,
 		Update: resourceProjectUpdate,
-		Delete: resourceProjectDelete,
+		Delete: resourceProjectArchive,
 		Importer: &schema.ResourceImporter{
 			State: resourceProjectImport,
 		},
@@ -201,9 +202,16 @@ func resourceProjectRead(d *schema.ResourceData, meta interface{}) error {
 	return nil
 }
 
-func resourceProjectDelete(d *schema.ResourceData, meta interface{}) error {
+func resourceProjectArchive(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*api.Client)
-	return client.Projects.Delete(d.Id())
+
+	err := client.Projects.Archive(d.Id())
+	if err != nil {
+		return err
+	}
+
+	name := d.Get("name")
+	return client.Projects.Rename(d.Id(), fmt.Sprintf("%s (Archived)", name.(string)))
 }
 
 func resourceProjectImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {

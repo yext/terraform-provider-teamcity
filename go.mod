@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/hashicorp/terraform v0.12.2
 	github.com/robfig/cron v1.2.0
-	github.com/yext/go-teamcity v0.5.4
+  github.com/yext/go-teamcity v0.5.4
 )
 
 require (
