@@ -498,7 +498,10 @@ func resourceBuildConfigRead(d *schema.ResourceData, meta interface{}) error {
 
 	srv := client.BuildFeatureService(d.Id())
 	buildFeatures, err := srv.GetBuildFeatures()
-	buildFeaturesToSave, err := flattenBuildFeatures(buildFeatures)
+	if err != nil {
+		return err
+	}
+	buildFeaturesToSave := flattenBuildFeatures(buildFeatures)
 	if err := d.Set("feature", buildFeaturesToSave); err != nil {
 		return err
 	}
@@ -770,7 +773,7 @@ func flattenBuildStepCmdLine(s *api.StepCommandLine) map[string]interface{} {
 	return m
 }
 
-func flattenBuildFeatures(bfs []api.BuildFeature) ([]map[string]interface{}, error) {
+func flattenBuildFeatures(bfs []api.BuildFeature) []map[string]interface{} {
 	var bfsToSave []map[string]interface{}
 	for _, bf := range bfs {
 		bfToSave := make(map[string]interface{})
@@ -787,7 +790,7 @@ func flattenBuildFeatures(bfs []api.BuildFeature) ([]map[string]interface{}, err
 		}
 		bfsToSave = append(bfsToSave, bfToSave)
 	}
-	return bfsToSave, nil
+	return bfsToSave
 }
 
 func expandBuildFeatures(list interface{}) ([]api.BuildFeature, error) {
