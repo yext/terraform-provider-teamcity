@@ -1,0 +1,25 @@
+name: Release Go Binaries
+
+on: 
+  release:
+    types: [created]
+
+jobs:
+  releases-matrix:
+    name: Release Matrix
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, darwin]
+        goarch: [arm64, amd64]
+    steps:
+    - uses: actions/checkout@v2
+    - uses: wangyoucao577/go-release-action@v1.48
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        goos: ${{ matrix.goos }}
+        goarch: ${{ matrix.goarch }}
+        goversion: 1.19
+        build_flags: -v
+        sha256sum: true
+        extra_files: LICENSE README.md
