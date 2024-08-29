@@ -297,7 +297,7 @@ func resourceBuildConfigCreate(d *schema.ResourceData, meta interface{}) error {
 
 func resourceBuildConfigUpdate(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*api.Client)
-	dt, err := getBuildConfiguration(client, d.Id())
+	dt, err := client.BuildTypes.GetByID(d.Id())
 	if err != nil {
 		return err
 	}
@@ -450,14 +450,41 @@ func resourceBuildConfigArchive(d *schema.ResourceData, meta interface{}) error 
 		}
 	}
 
-	name := d.Get("name")
-	return client.BuildTypes.Rename(d.Id(), fmt.Sprintf("%s (Archived)", name.(string)))
+	parent, err := client.Projects.GetByID(d.Get("project_id").(string))
+	if err != nil {
+		return err
+	}
+
+	existingNames := map[string]struct{}{}
+	for _, child := range parent.BuildTypes.Items {
+		existingNames[child.Name] = struct{}{}
+	}
+
+	var (
+		oldName = d.Get("name")
+		newName = fmt.Sprintf("%s (Archived)", oldName)
+	)
+
+	/*
+	If "... (Archived)" is already taken, check if "... (Archive 2) to
+	"... (Archive 98)" are taken, using the first that is not.
+	If all were taken, try using "... (Archive 99)" without checking,
+	to get TeamCity to return a suitable error if it is also taken.
+	*/
+	for i := 2; i <= 99; i++ {
+		if _, exists := existingNames[newName]; !exists {
+			break
+		}
+		newName = fmt.Sprintf("%s (Archive %d)", oldName, i)
+	}
+
+	return client.BuildTypes.Rename(d.Id(), newName)
 }
 
 func resourceBuildConfigRead(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*api.Client)
 
-	dt, err := getBuildConfiguration(client, d.Id())
+	dt, err := client.BuildTypes.GetByID(d.Id())
 	if err != nil {
 		return err
 	}
@@ -525,15 +552,6 @@ func resourceBuildConfigRead(d *schema.ResourceData, meta interface{}) error {
 	}
 
 	return nil
-}
-
-func getBuildConfiguration(c *api.Client, id string) (*api.BuildType, error) {
-	dt, err := c.BuildTypes.GetByID(id)
-	if err != nil {
-		return nil, err
-	}
-
-	return dt, nil
 }
 
 var stepTypeMap = map[string]string{
