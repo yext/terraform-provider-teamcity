@@ -210,8 +210,40 @@ func resourceProjectArchive(d *schema.ResourceData, meta interface{}) error {
 		return err
 	}
 
-	name := d.Get("name")
-	return client.Projects.Rename(d.Id(), fmt.Sprintf("%s (Archived)", name.(string)))
+	parentID, hasParent := d.GetOk("parent_id")
+	if !hasParent {
+		parentID = "_Root"
+	}
+
+	parent, err := client.Projects.GetByID(parentID.(string))
+	if err != nil {
+		return err
+	}
+
+	existingNames := map[string]struct{}{}
+	for _, subproject := range parent.Projects.Items {
+		existingNames[subproject.Name] = struct{}{}
+	}
+
+	var (
+		oldName = d.Get("name")
+		newName = fmt.Sprintf("%s (Archived)", oldName)
+	)
+
+	/*
+	If "... (Archived)" is already taken, check if "... (Archive 2) to
+	"... (Archive 98)" are taken, using the first that is not.
+	If all were taken, try using "... (Archived 99)" without checking,
+	to get TeamCity to return a suitable error if it is also taken.
+	*/
+	for i := 2; i <= 99; i++ {
+		if _, exists := existingNames[newName]; !exists {
+			break
+		}
+		newName = fmt.Sprintf("%s (Archive %d)", oldName, i)
+	}
+
+	return client.Projects.Rename(d.Id(), newName)
 }
 
 func resourceProjectImport(d *schema.ResourceData, meta interface{}) ([]*schema.ResourceData, error) {
