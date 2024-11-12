@@ -434,12 +434,6 @@ func resourceBuildConfigUpdate(d *schema.ResourceData, meta interface{}) error {
 func resourceBuildConfigArchive(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*api.Client)
 
-	// Delete the build config if the name is "Coverage"
-	// We are bulk retiring all the Coverage builds, which we prefer to delete over archive them
-	if d.Get("name") == "Coverage" {
-		return client.BuildTypes.Delete(d.Id())
-	}
-
 	err := client.BuildTypes.Pause(d.Id())
 	if err != nil {
 		return err
