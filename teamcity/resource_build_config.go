@@ -434,6 +434,17 @@ func resourceBuildConfigUpdate(d *schema.ResourceData, meta interface{}) error {
 func resourceBuildConfigArchive(d *schema.ResourceData, meta interface{}) error {
 	client := meta.(*api.Client)
 
+	if _, ok := d.GetOk("settings"); ok {
+		options, err := expandBuildConfigOptions(d)
+		if err != nil {
+			return err
+		}
+		if options.BuildConfigurationType == "COMPOSITE" {
+			// Delete composite build instead of archive
+			return client.BuildTypes.Delete(d.Id())
+		}
+	}
+
 	err := client.BuildTypes.Pause(d.Id())
 	if err != nil {
 		return err
@@ -466,10 +477,10 @@ func resourceBuildConfigArchive(d *schema.ResourceData, meta interface{}) error 
 	)
 
 	/*
-	If "... (Archived)" is already taken, check if "... (Archive 2) to
-	"... (Archive 98)" are taken, using the first that is not.
-	If all were taken, try using "... (Archive 99)" without checking,
-	to get TeamCity to return a suitable error if it is also taken.
+		If "... (Archived)" is already taken, check if "... (Archive 2) to
+		"... (Archive 98)" are taken, using the first that is not.
+		If all were taken, try using "... (Archive 99)" without checking,
+		to get TeamCity to return a suitable error if it is also taken.
 	*/
 	for i := 2; i <= 99; i++ {
 		if _, exists := existingNames[newName]; !exists {
