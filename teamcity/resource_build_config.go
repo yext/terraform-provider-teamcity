@@ -71,7 +71,6 @@ func resourceBuildConfig() *schema.Resource {
 			"project_id": {
 				Type:     schema.TypeString,
 				Required: true,
-				ForceNew: true,
 			},
 			"description": {
 				Type:     schema.TypeString,
@@ -305,6 +304,14 @@ func resourceBuildConfigUpdate(d *schema.ResourceData, meta interface{}) error {
 	if d.HasChange("name") {
 		v := d.Get("name")
 		err = client.BuildTypes.Rename(d.Id(), v.(string))
+		if err != nil {
+			return err
+		}
+	}
+
+	if d.HasChange("project_id") {
+		v := d.Get("project_id")
+		err = client.BuildTypes.Move(d.Id(), v.(string))
 		if err != nil {
 			return err
 		}
