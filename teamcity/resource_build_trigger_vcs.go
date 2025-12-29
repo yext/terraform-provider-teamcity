@@ -34,7 +34,7 @@ func resourceBuildTriggerVcs() *schema.Resource {
 				ForceNew: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
 			},
-			"snapshot_dependency_triggers": {
+			"trigger_on_snapshot_dependency_changes": {
 				Type:     schema.TypeBool,
 				Optional: true,
 				ForceNew: true,
@@ -72,7 +72,7 @@ func resourceBuildTriggerVcsCreate(d *schema.ResourceData, meta interface{}) err
 		dt.BranchFilter = expandStringSlice(v.([]interface{}))
 	}
 
-	if v, ok := d.GetOk("snapshot_dependency_triggers"); ok {
+	if v, ok := d.GetOk("trigger_on_snapshot_dependency_changes"); ok {
 		dt.Options.SnapshotDependencyTriggers = v.(bool)
 	}
 
@@ -113,6 +113,10 @@ func resourceBuildTriggerVcsRead(d *schema.ResourceData, meta interface{}) error
 		if err := d.Set("branch_filter", dt.BranchFilter); err != nil {
 			return err
 		}
+	}
+
+	if err := d.Set("trigger_on_snapshot_dependency_changes", dt.Options.SnapshotDependencyTriggers); err != nil {
+		return err
 	}
 
 	return nil
