@@ -3,8 +3,8 @@ package teamcity
 import (
 	"fmt"
 
-	api "github.com/yext/go-teamcity/teamcity"
 	"github.com/hashicorp/terraform/helper/schema"
+	api "github.com/yext/go-teamcity/teamcity"
 )
 
 func resourceBuildTriggerVcs() *schema.Resource {
@@ -33,6 +33,12 @@ func resourceBuildTriggerVcs() *schema.Resource {
 				Optional: true,
 				ForceNew: true,
 				Elem:     &schema.Schema{Type: schema.TypeString},
+			},
+			"trigger_on_snapshot_dependency_changes": {
+				Type:     schema.TypeBool,
+				Optional: true,
+				ForceNew: true,
+				Default:  false,
 			},
 		},
 	}
@@ -64,6 +70,10 @@ func resourceBuildTriggerVcsCreate(d *schema.ResourceData, meta interface{}) err
 
 	if v, ok := d.GetOk("branch_filter"); ok {
 		dt.BranchFilter = expandStringSlice(v.([]interface{}))
+	}
+
+	if v, ok := d.GetOk("trigger_on_snapshot_dependency_changes"); ok {
+		dt.Options.SnapshotDependencyTriggers = v.(bool)
 	}
 
 	out, err := ts.AddTrigger(dt)
@@ -103,6 +113,10 @@ func resourceBuildTriggerVcsRead(d *schema.ResourceData, meta interface{}) error
 		if err := d.Set("branch_filter", dt.BranchFilter); err != nil {
 			return err
 		}
+	}
+
+	if err := d.Set("trigger_on_snapshot_dependency_changes", dt.Options.SnapshotDependencyTriggers); err != nil {
+		return err
 	}
 
 	return nil
