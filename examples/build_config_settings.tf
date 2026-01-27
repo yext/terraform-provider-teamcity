@@ -8,7 +8,7 @@ resource "teamcity_buildconfiguration" "nocode_config" {
   description = "Configuration to showcase build configuration settings"
   project_id = "${teamcity_project.nocode.id}"
 
-  #These settings appear on "General Settings" for build configurations in TeamCity's UI
+  #These settings appear on "Gneral Settings" for build configurations in TeamCity's UI
   settings {
     #Type of build configuration: "regular" (default), "composite" or "deployment"
     configuration_type = "regular"
